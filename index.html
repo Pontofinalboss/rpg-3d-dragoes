@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPG 3D - Dragons Awakening</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body>
+    <!-- TELA DE LOGIN -->
+    <div id="loginContainer" class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1 class="game-title">⚔️ DRAGONS AWAKENING ⚔️</h1>
+                <p class="game-subtitle">Bem-vindo ao Reino do Eskai</p>
+            </div>
+            
+            <div class="login-tabs">
+                <button class="tab-btn active" data-tab="login">Login</button>
+                <button class="tab-btn" data-tab="register">Cadastro</button>
+            </div>
+
+            <!-- TAB LOGIN -->
+            <div id="loginTab" class="tab-content active">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginUser">Usuário</label>
+                        <input type="text" id="loginUser" placeholder="Digite seu usuário" required>
+                        <span class="error-msg" id="loginUserError"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Senha</label>
+                        <input type="password" id="loginPassword" placeholder="Digite sua senha" required>
+                        <span class="error-msg" id="loginPasswordError"></span>
+                    </div>
+                    <button type="submit" class="btn-login">⚡ Entrar no Jogo ⚡</button>
+                    <div class="error-msg" id="loginError"></div>
+                </form>
+            </div>
+
+            <!-- TAB REGISTRO -->
+            <div id="registerTab" class="tab-content">
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="regUser">Usuário</label>
+                        <input type="text" id="regUser" placeholder="Escolha seu nome de guerreiro" required minlength="3">
+                        <span class="error-msg" id="regUserError"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="regPassword">Senha</label>
+                        <input type="password" id="regPassword" placeholder="Crie uma senha forte" required minlength="6">
+                        <span class="error-msg" id="regPasswordError"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="regPasswordConfirm">Confirmar Senha</label>
+                        <input type="password" id="regPasswordConfirm" placeholder="Confirme sua senha" required>
+                        <span class="error-msg" id="regPasswordConfirmError"></span>
+                    </div>
+                    <button type="submit" class="btn-login">🔥 Criar Conta 🔥</button>
+                    <div class="error-msg" id="registerError"></div>
+                    <div class="success-msg" id="registerSuccess"></div>
+                </form>
+            </div>
+
+            <div class="login-footer">
+                <p>Primeira vez? Crie sua conta e comece sua jornada!</p>
+            </div>
+        </div>
+
+        <!-- Animação de fundo -->
+        <canvas id="loginCanvas" class="login-bg"></canvas>
+    </div>
+
+    <!-- JOGO PRINCIPAL -->
+    <div id="gameContainer" class="game-container" style="display: none;">
+        <!-- HUD PRINCIPAL -->
+        <div class="hud-container">
+            <!-- Status Window (Superior Esquerdo) -->
+            <div class="status-window">
+                <div class="window-header">⚔️ STATUS</div>
+                <div class="window-content">
+                    <div class="status-row">
+                        <span class="label">Nome:</span>
+                        <span class="value" id="hudName">-</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="label">Nível:</span>
+                        <span class="value" id="hudLevel">1</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="label">Classe:</span>
+                        <span class="value" id="hudClass">-</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="label">EXP:</span>
+                        <span class="value" id="hudExp">0/100</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="label">Ouro:</span>
+                        <span class="value gold" id="hudGold">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Health/Mana Bar (Centro Superior) -->
+            <div class="stats-bars">
+                <div class="bar-container">
+                    <div class="bar-label">HP</div>
+                    <div class="bar-bg">
+                        <div class="bar-fill hp-bar" id="hpBar" style="width: 100%"></div>
+                    </div>
+                    <div class="bar-text" id="hpText">100/100</div>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-label">MANA</div>
+                    <div class="bar-bg">
+                        <div class="bar-fill mana-bar" id="manaBar" style="width: 100%"></div>
+                    </div>
+                    <div class="bar-text" id="manaText">50/50</div>
+                </div>
+            </div>
+
+            <!-- Inventory Window (Superior Direito) -->
+            <div class="inventory-window">
+                <div class="window-header">🎒 INVENTÁRIO</div>
+                <div class="window-content">
+                    <div class="inventory-grid" id="inventoryGrid">
+                        <!-- Itens aparecem aqui -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quest Window (Inferior Esquerdo) -->
+            <div class="quest-window">
+                <div class="window-header">📜 QUESTS</div>
+                <div class="window-content">
+                    <div id="questList">
+                        <p class="no-data">Nenhuma quest ativa</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Combat Log (Inferior Centro/Direito) -->
+            <div class="combat-log-window">
+                <div class="window-header">⚡ COMBATE</div>
+                <div class="log-content" id="combatLog">
+                    <p class="log-entry info">Bem-vindo ao Reino!</p>
+                </div>
+            </div>
+
+            <!-- Menu de Ações -->
+            <div class="action-menu">
+                <button class="menu-btn" id="btnInventory" title="Inventário">🎒</button>
+                <button class="menu-btn" id="btnSkills" title="Habilidades">✨</button>
+                <button class="menu-btn" id="btnQuests" title="Missões">📜</button>
+                <button class="menu-btn" id="btnGuild" title="Guilda">🏛️</button>
+                <button class="menu-btn" id="btnMap" title="Mapa">🗺️</button>
+                <button class="menu-btn" id="btnSettings" title="Configurações">⚙️</button>
+                <button class="menu-btn logout" id="btnLogout" title="Logout">🚪</button>
+            </div>
+        </div>
+
+        <!-- Canvas 3D -->
+        <div id="canvas3d"></div>
+    </div>
+
+    <!-- MODAIS -->
+    <!-- Modal de Seleção de Classe -->
+    <div id="classSelectionModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Escolha sua Classe</h2>
+            <div class="class-options">
+                <div class="class-card" data-class="aventureiro">
+                    <h3>⚔️ Aventureiro</h3>
+                    <p>Guerreiro versátil com equilíbrio entre força e resistência.</p>
+                    <ul>
+                        <li>HP: 150</li>
+                        <li>ATK: 20</li>
+                        <li>DEF: 15</li>
+                    </ul>
+                </div>
+                <div class="class-card" data-class="mago">
+                    <h3>🔮 Mago</h3>
+                    <p>Mestre das magias com grande poder ofensivo.</p>
+                    <ul>
+                        <li>HP: 100</li>
+                        <li>ATK: 30</li>
+                        <li>MANA: 100</li>
+                    </ul>
+                </div>
+                <div class="class-card" data-class="paladino">
+                    <h3>✨ Paladino</h3>
+                    <p>Defensor sagrado com habilidades de cura.</p>
+                    <ul>
+                        <li>HP: 180</li>
+                        <li>DEF: 25</li>
+                        <li>Cura: Forte</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Painel de Admin -->
+    <div id="adminPanel" class="modal" style="display: none;">
+        <div class="modal-content admin-panel">
+            <div class="admin-header">
+                <h2>🛡️ PAINEL DE ADMINISTRADOR 🛡️</h2>
+                <button class="close-btn" id="closeAdminPanel">&times;</button>
+            </div>
+            
+            <div class="admin-tabs">
+                <button class="admin-tab-btn active" data-admin-tab="usuarios">Usuários</button>
+                <button class="admin-tab-btn" data-admin-tab="itens">Itens</button>
+                <button class="admin-tab-btn" data-admin-tab="monstros">Monstros</button>
+                <button class="admin-tab-btn" data-admin-tab="quests">Quests</button>
+            </div>
+
+            <!-- Tab Usuários -->
+            <div id="adminUsuarios" class="admin-tab-content active">
+                <h3>Gerenciar Usuários</h3>
+                <div class="admin-list" id="adminUsersList"></div>
+            </div>
+
+            <!-- Tab Itens -->
+            <div id="adminItens" class="admin-tab-content">
+                <h3>Gerenciar Itens</h3>
+                <button class="btn-add" id="btnAddItem">+ Novo Item</button>
+                <div class="admin-list" id="adminItemsList"></div>
+            </div>
+
+            <!-- Tab Monstros -->
+            <div id="adminMonstros" class="admin-tab-content">
+                <h3>Gerenciar Monstros</h3>
+                <button class="btn-add" id="btnAddMonster">+ Novo Monstro</button>
+                <div class="admin-list" id="adminMonstersList"></div>
+            </div>
+
+            <!-- Tab Quests -->
+            <div id="adminQuests" class="admin-tab-content">
+                <h3>Gerenciar Quests</h3>
+                <button class="btn-add" id="btnAddQuest">+ Nova Quest</button>
+                <div class="admin-list" id="adminQuestsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/auth.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/scene3d.js"></script>
+    <script src="js/character.js"></script>
+    <script src="js/combat.js"></script>
+    <script src="js/quests.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/ui.js"></script>
+</body>
+</html>
